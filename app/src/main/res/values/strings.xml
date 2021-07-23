@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">mstdnpublic</string>
+    <string name="input_host_hint">Please input mastdon server host</string>
+    <string name="btn_confirm_host">Confirm</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <!-- shared preferences -->
+    <string name="preferences_host">host</string>
+</resources>

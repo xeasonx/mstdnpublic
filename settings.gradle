@@ -1,0 +1,2 @@
+rootProject.name = "mstdnpublic"
+include ':app'
