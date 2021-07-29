@@ -5,33 +5,48 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
+import com.example.mstdnResponseEntities.Error;
+import com.example.mstdnResponseEntities.Status;
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 
 
+/**
+ * This Fragment uses a RecyclerView to display a list of message posts, contents of the list
+ * is held by MessageListAdapter.
+ * Message posts data are collected through MSTDNService, which is a bound service, and
+ * ResponseHandler class, which is a subclass of Handler.
+ */
 public class MessageListFragment extends Fragment {
     private RecyclerView recyclerView;
     private RecyclerView.LayoutManager layoutManager;
     private MessageListAdapter messageListAdapter;
-    MessageService messageService;
+    private ResponseHandler responseHandler = new ResponseHandler();
+    MSTDNService mstdnService;
     boolean isBound = false;
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.i("service", "connecting ...");
-            MessageService.MessageBinder binder = (MessageService.MessageBinder) service;
-            messageService = binder.getService();
+            MSTDNService.MSTDNRestfulBinder binder = (MSTDNService.MSTDNRestfulBinder) service;
+            mstdnService = binder.getService();
             isBound = true;
+            mstdnService.setHandler(responseHandler);
             Log.i("service", "connected");
-            String[] randoms = messageService.getRandomNumber();
-            messageListAdapter = new MessageListAdapter(randoms);
-            recyclerView.setAdapter(messageListAdapter);
+            String[] randoms = mstdnService.getRandomNumber();
+            mstdnService.callApi("TimelinePublic");
         }
 
         @Override
@@ -41,36 +56,50 @@ public class MessageListFragment extends Fragment {
         }
     };
 
-//    // TODO: Rename parameter arguments, choose names that match
-//    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-//    private static final String ARG_PARAM1 = "param1";
-//    private static final String ARG_PARAM2 = "param2";
-//
-//    // TODO: Rename and change types of parameters
-//    private String mParam1;
-//    private String mParam2;
+    public class ResponseHandler extends Handler {
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            Bundle bundle = msg.getData();
+            int statusCode = bundle.getInt("statusCode");
+            boolean isJson = bundle.getBoolean("isJson");
+            String body = bundle.getString("body");
+            Status[] statuses = null;
+            Error error = null;
+            Log.i("handler", String.valueOf(statusCode));
+            Log.i("handler", String.valueOf(isJson));
+            Log.i("handler", body);
+            if (statusCode == 200 && isJson) {
+                Gson gson = new Gson();
+                try {
+                    statuses = gson.fromJson(body, Status[].class);
+                } catch (JsonParseException e) {
+                    error = gson.fromJson(body, Error.class);
+                }
+                if (statuses != null) {
+                    int size = statuses.length;
+                    String[] avatarUrls = new String[size];
+                    String[] contents = new String[size];
+                    String[] displayNames = new String[size];
+                    for (int i=0; i<statuses.length; i++) {
+                        avatarUrls[i] = statuses[i].account.avatar;
+                        contents[i] = statuses[i].content;
+                        displayNames[i] = statuses[i].account.display_name;
+                    }
+                    messageListAdapter = new MessageListAdapter(avatarUrls, displayNames, contents);
+                    recyclerView.setAdapter(messageListAdapter);
+                } else {
+                    Toast.makeText(getActivity(), error.error, Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(getActivity(), "none 200 response", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
     public MessageListFragment() {
         // Required empty public constructor
     }
 
-//    /**
-//     * Use this factory method to create a new instance of
-//     * this fragment using the provided parameters.
-//     *
-//     * @param param1 Parameter 1.
-//     * @param param2 Parameter 2.
-//     * @return A new instance of fragment MessageListFragment.
-//     */
-//    // TODO: Rename and change types and number of parameters
-//    public static MessageListFragment newInstance(String param1, String param2) {
-//        MessageListFragment fragment = new MessageListFragment();
-//        Bundle args = new Bundle();
-//        args.putString(ARG_PARAM1, param1);
-//        args.putString(ARG_PARAM2, param2);
-//        fragment.setArguments(args);
-//        return fragment;
-//    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -92,7 +121,7 @@ public class MessageListFragment extends Fragment {
         recyclerView = (RecyclerView) getActivity().findViewById(R.id.message_recycle);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.scrollToPosition(0);
-        Intent intent = new Intent(getActivity(), MessageService.class);
+        Intent intent = new Intent(getActivity(), MSTDNService.class);
         getActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE);
         Log.i("service", String.valueOf(isBound));
 

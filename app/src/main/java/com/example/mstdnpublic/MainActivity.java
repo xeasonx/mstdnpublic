@@ -9,7 +9,7 @@ import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
     private String host = "";
-    private LocalDataModel dataModel;
+//    private LocalDataModel dataModel;
     private final String TAG = "mstdnapp";
 
     @Override
@@ -22,10 +22,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
-        dataModel = new ViewModelProvider(this).get(LocalDataModel.class);
-        dataModel.getHost().observe(this, item -> {
-            this.host = item;
-        });
+//        dataModel = new ViewModelProvider(this).get(LocalDataModel.class);
+//        dataModel.getHost().observe(this, item -> {
+//            this.host = item;
+//        });
         setContentView(R.layout.activity_main);
         SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
         host = sharedPreferences.getString(getString(R.string.preferences_host), "");

@@ -16,14 +16,17 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
+
+import java.util.List;
 
 
 public class HostInputFragment extends Fragment {
     private EditText editText;
     private Button button;
     private String host = "";
-    private LocalDataModel dataModel;
+//    private LocalDataModel dataModel;
 
     public HostInputFragment() {
         super(R.layout.fragment_input_host);
@@ -42,7 +45,7 @@ public class HostInputFragment extends Fragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        dataModel = new ViewModelProvider(requireActivity()).get(LocalDataModel.class);
+//        dataModel = new ViewModelProvider(requireActivity()).get(LocalDataModel.class);
     }
 
     @Override
@@ -71,7 +74,11 @@ public class HostInputFragment extends Fragment {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                host = textWatcher.getHost().trim();
+                if (textWatcher.getHost() == null) {
+                    host = "";
+                } else {
+                    host = textWatcher.getHost().trim();
+                }
                 boolean isHostChecked = checkHost();
                 if (isHostChecked) {
 //                    dataModel.setHost(host);
@@ -79,7 +86,11 @@ public class HostInputFragment extends Fragment {
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putString(getString(R.string.preferences_host), host);
                     editor.apply();
-                    getParentFragmentManager().beginTransaction().setReorderingAllowed(true).replace(R.id.fragment_input_host, MessageListFragment.class, null).commit();
+                    getParentFragmentManager()
+                            .beginTransaction()
+                            .setReorderingAllowed(true)
+                            .replace(R.id.fragment_input_host, MessageListFragment.class, null)
+                            .commit();
                     Log.i("click", host);
                 }
             }

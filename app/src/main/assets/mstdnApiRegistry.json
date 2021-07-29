@@ -1,0 +1,15 @@
+[
+  {
+    "name": "TimelinePublic",
+    "path": "https://mstdn.jp/api/v1/timelines/public",
+    "requestEntities": [
+      {
+        "entity": "com.example.mstdnRequestEntities.TimelinePublic",
+        "type": "query",
+        "contentType": ""
+      }
+    ],
+    "method": "GET",
+    "headers": []
+  }
+]
