@@ -1,7 +1,7 @@
 [
   {
     "name": "TimelinePublic",
-    "path": "https://mstdn.jp/api/v1/timelines/public",
+    "path": "api/v1/timelines/public",
     "requestEntities": [
       {
         "entity": "com.example.mstdnRequestEntities.TimelinePublic",

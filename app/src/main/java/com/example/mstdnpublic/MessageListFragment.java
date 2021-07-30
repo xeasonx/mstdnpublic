@@ -22,6 +22,10 @@ import com.example.mstdnResponseEntities.Status;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 
 /**
  * This Fragment uses a RecyclerView to display a list of message posts, contents of the list
@@ -30,9 +34,13 @@ import com.google.gson.JsonParseException;
  * ResponseHandler class, which is a subclass of Handler.
  */
 public class MessageListFragment extends Fragment {
+    private String host;
+    private final int PORT = 80;
+    private final String PROTOCOL = "https";
     private RecyclerView recyclerView;
     private RecyclerView.LayoutManager layoutManager;
-    private MessageListAdapter messageListAdapter;
+//    private MessageListAdapter messageListAdapter;
+    private TweetListAdapter tweetListAdapter = new TweetListAdapter();
     private ResponseHandler responseHandler = new ResponseHandler();
     MSTDNService mstdnService;
     boolean isBound = false;
@@ -45,8 +53,7 @@ public class MessageListFragment extends Fragment {
             isBound = true;
             mstdnService.setHandler(responseHandler);
             Log.i("service", "connected");
-            String[] randoms = mstdnService.getRandomNumber();
-            mstdnService.callApi("TimelinePublic");
+            mstdnService.callApi(host, PORT, PROTOCOL,"TimelinePublic");
         }
 
         @Override
@@ -62,13 +69,14 @@ public class MessageListFragment extends Fragment {
             Bundle bundle = msg.getData();
             int statusCode = bundle.getInt("statusCode");
             boolean isJson = bundle.getBoolean("isJson");
+            boolean isSucceed = bundle.getBoolean("isSucceed");
             String body = bundle.getString("body");
             Status[] statuses = null;
             Error error = null;
             Log.i("handler", String.valueOf(statusCode));
             Log.i("handler", String.valueOf(isJson));
             Log.i("handler", body);
-            if (statusCode == 200 && isJson) {
+            if (statusCode == 200 && isJson && isSucceed) {
                 Gson gson = new Gson();
                 try {
                     statuses = gson.fromJson(body, Status[].class);
@@ -76,17 +84,23 @@ public class MessageListFragment extends Fragment {
                     error = gson.fromJson(body, Error.class);
                 }
                 if (statuses != null) {
-                    int size = statuses.length;
-                    String[] avatarUrls = new String[size];
-                    String[] contents = new String[size];
-                    String[] displayNames = new String[size];
-                    for (int i=0; i<statuses.length; i++) {
-                        avatarUrls[i] = statuses[i].account.avatar;
-                        contents[i] = statuses[i].content;
-                        displayNames[i] = statuses[i].account.display_name;
-                    }
-                    messageListAdapter = new MessageListAdapter(avatarUrls, displayNames, contents);
-                    recyclerView.setAdapter(messageListAdapter);
+//                    int size = statuses.length;
+//                    String[] avatarUrls = new String[size];
+//                    String[] contents = new String[size];
+//                    String[] displayNames = new String[size];
+//                    for (int i=0; i<statuses.length; i++) {
+//                        avatarUrls[i] = statuses[i].account.avatar;
+//                        contents[i] = statuses[i].content;
+//                        displayNames[i] = statuses[i].account.display_name;
+//                    }
+//                    messageListAdapter = new MessageListAdapter(avatarUrls, displayNames, contents);
+                    ArrayList<Status> newItems = new ArrayList<>();
+                    List<Status> currentItems = tweetListAdapter.getCurrentList();
+                    newItems.addAll(Arrays.asList(statuses));
+                    newItems.addAll(currentItems);
+                    tweetListAdapter.submitList(newItems);
+                    recyclerView.setAdapter(tweetListAdapter);
+//                    recyclerView.setAdapter(messageListAdapter);
                 } else {
                     Toast.makeText(getActivity(), error.error, Toast.LENGTH_SHORT).show();
                 }
@@ -100,10 +114,20 @@ public class MessageListFragment extends Fragment {
         // Required empty public constructor
     }
 
+    public static MessageListFragment newInstance(String host) {
+        MessageListFragment fragment = new MessageListFragment();
+        Bundle args = new Bundle();
+        args.putString("host", host);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.host = getArguments().getString("host");
+        Log.i("host", host);
     }
 
     @Override
@@ -121,6 +145,15 @@ public class MessageListFragment extends Fragment {
         recyclerView = (RecyclerView) getActivity().findViewById(R.id.message_recycle);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.scrollToPosition(0);
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    mstdnService.callApi(host, PORT, PROTOCOL, "TimelinePublic");
+                }
+            }
+        });
         Intent intent = new Intent(getActivity(), MSTDNService.class);
         getActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE);
         Log.i("service", String.valueOf(isBound));

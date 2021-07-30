@@ -52,7 +52,7 @@ public class ExampleInstrumentedTest {
         MSTDNService.MSTDNRestfulBinder mstdnRestfulBinder = (MSTDNService.MSTDNRestfulBinder) binder;
         MSTDNService service = mstdnRestfulBinder.getService();
         service.setHandler(new TempHandler());
-        service.callApi("TimelinePublic");
+        service.callApi("mstdn.jp", 80, "https", "TimelinePublic");
         Looper.loop();
     }
 

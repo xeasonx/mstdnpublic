@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
             getSupportFragmentManager()
                     .beginTransaction()
                     .setReorderingAllowed(true)
-                    .replace(R.id.fragment_input_host, MessageListFragment.class, savedInstanceState)
+                    .replace(R.id.fragment_input_host, MessageListFragment.newInstance(host))
                     .commit();
         }
     }

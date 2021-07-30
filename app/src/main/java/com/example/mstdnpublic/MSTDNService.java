@@ -1,5 +1,6 @@
 package com.example.mstdnpublic;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
@@ -96,11 +97,17 @@ public class MSTDNService extends Service {
         return binder;
     }
 
-    public void callApi(String apiName) {
+    public void callApi(String host, int port, String protocol, String apiName) {
         MSTDNRestfulRegister reg = getApiRegister(apiName);
+        String url;
         if (reg != null) {
+            if (port == 80) {
+                url = String.format("%s://%s/%s", protocol, host, reg.path);
+            } else {
+                url = String.format("%s://%s:%d/%s", protocol, host, port, reg.path);
+            }
             UrlRequest.Builder requestBuilder = cronetEngine.newUrlRequestBuilder(
-                    reg.path,
+                    url,
                     new MSTDNRestfulCallback(handler),
                     Executors.newSingleThreadExecutor()
             );
