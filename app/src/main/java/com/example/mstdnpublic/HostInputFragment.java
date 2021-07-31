@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -18,27 +17,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
 import androidx.core.os.HandlerCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.ViewModelProvider;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 public class HostInputFragment extends Fragment {
     private EditText editText;
     private Button button;
     private String host = "";
-    private CheckHost checkHost;
-//    private LocalDataModel dataModel;
+    private Handler handler = HandlerCompat.createAsync(Looper.getMainLooper());
+    private DomainValidator domainValidator;
 
     public HostInputFragment() {
         super(R.layout.fragment_input_host);
@@ -57,7 +45,6 @@ public class HostInputFragment extends Fragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-//        dataModel = new ViewModelProvider(requireActivity()).get(LocalDataModel.class);
     }
 
     @Override
@@ -72,13 +59,13 @@ public class HostInputFragment extends Fragment {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     host = textWatcher.getHost().trim();
-//                    boolean isHostChecked = checkHost();
-//                    if (isHostChecked) {
-//                        button.callOnClick();
-//                    }
-                    checkHost = new CheckHost(host);
-                    Thread thread = new Thread(checkHost);
-                    thread.start();
+                    domainValidator = new DomainValidator(handler);
+                    domainValidator.validate(host, new ValidationCallback() {
+                        @Override
+                        public void onComplete(boolean result) {
+                            Toast.makeText(getActivity(), String.valueOf(result), Toast.LENGTH_SHORT).show();
+                        }
+                    });
                     return true;
                 }
                 return false;
@@ -93,24 +80,27 @@ public class HostInputFragment extends Fragment {
                 } else {
                     host = textWatcher.getHost().trim();
                 }
-                checkHost = new CheckHost(host);
-                Thread thread = new Thread(checkHost);
-                thread.start();
-//                boolean isHostChecked = checkHost();
-//                if (isHostChecked) {
-////                    dataModel.setHost(host);
-//                    SharedPreferences sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
-//                    SharedPreferences.Editor editor = sharedPreferences.edit();
-//                    editor.putString(getString(R.string.preferences_host), host);
-//                    editor.apply();
-//                    getParentFragmentManager()
-//                            .beginTransaction()
-//                            .setReorderingAllowed(true)
-//                            .replace(R.id.fragment_input_host, MessageListFragment.class, null)
-//                            .commit();
-
+                domainValidator = new DomainValidator(handler);
+                domainValidator.validate(host, new ValidationCallback() {
+                    @Override
+                    public void onComplete(boolean result) {
+                        if (result) {
+                            SharedPreferences sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
+                            SharedPreferences.Editor editor = sharedPreferences.edit();
+                            editor.putString(getString(R.string.preferences_host), host);
+                            editor.apply();
+                            Log.i("domain validator", "domain saved");
+                            getParentFragmentManager()
+                                .beginTransaction()
+                                .setReorderingAllowed(true)
+                                .replace(R.id.fragment_input_host, MessageListFragment.newInstance(host))
+                                .commit();
+                        } else {
+                            Toast.makeText(getActivity(), "invalid domain", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
                 Log.i("click", host);
-//                }
             }
         });
     }
@@ -135,43 +125,6 @@ public class HostInputFragment extends Fragment {
 
         public String getHost() {
             return host;
-        }
-    }
-
-    private class CheckHost implements Runnable{
-        private String hostToCheck;
-
-        public CheckHost(String hostToCheck) {
-            this.hostToCheck = hostToCheck;
-        }
-
-        @Override
-        public void run() {
-            Looper.prepare();
-            System.out.println(this.hostToCheck);
-            if (this.hostToCheck.isEmpty()) {
-                Toast.makeText(getActivity(), "invalid host", Toast.LENGTH_SHORT).show();
-            } else {
-                try {
-                    InetAddress address = InetAddress.getByName(this.hostToCheck);
-                    if (address.isReachable(5000)) {
-                        SharedPreferences sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
-                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                        editor.putString(getString(R.string.preferences_host), hostToCheck);
-                        editor.apply();
-                        getParentFragmentManager()
-                                .beginTransaction()
-                                .setReorderingAllowed(true)
-                                .replace(R.id.fragment_input_host, MessageListFragment.newInstance(this.hostToCheck))
-                                .commit();
-                    } else {
-                        Toast.makeText(getActivity(), "invalid host", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (IOException e) {
-                    Toast.makeText(getActivity(), "invalid host", Toast.LENGTH_SHORT).show();
-                }
-            }
-            Looper.loop();
         }
     }
 }
