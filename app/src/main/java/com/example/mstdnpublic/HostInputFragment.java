@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -52,6 +53,7 @@ public class HostInputFragment extends Fragment {
         super.onStart();
         editText = (EditText) getView().findViewById(R.id.edit_host);
         button = (Button) getView().findViewById(R.id.confirm_host);
+        InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
         CustomTextWatcher textWatcher = new CustomTextWatcher();
         editText.addTextChangedListener(textWatcher);
         editText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -66,6 +68,7 @@ public class HostInputFragment extends Fragment {
                             Toast.makeText(getActivity(), String.valueOf(result), Toast.LENGTH_SHORT).show();
                         }
                     });
+                    inputMethodManager.showSoftInput(v, InputMethodManager.SHOW_IMPLICIT);
                     return true;
                 }
                 return false;
@@ -105,7 +108,7 @@ public class HostInputFragment extends Fragment {
         });
     }
 
-    public class CustomTextWatcher implements TextWatcher {
+    private static class CustomTextWatcher implements TextWatcher {
         private String host;
 
         @Override

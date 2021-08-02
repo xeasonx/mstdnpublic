@@ -124,12 +124,4 @@ public class MSTDNService extends Service {
             Log.i("request", "api not found!!");
         }
     }
-
-    public String[] getRandomNumber() {
-        String[] randoms = new String[10];
-        for (int i=0; i<10; i++) {
-            randoms[i] = String.valueOf(random.nextInt());
-        }
-        return randoms;
-    }
 }

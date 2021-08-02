@@ -12,16 +12,20 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.VibrationAttributes;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import com.example.mstdnResponseEntities.Error;
 import com.example.mstdnResponseEntities.Status;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,11 +43,12 @@ public class MessageListFragment extends Fragment {
     private final String PROTOCOL = "https";
     private RecyclerView recyclerView;
     private RecyclerView.LayoutManager layoutManager;
-//    private MessageListAdapter messageListAdapter;
     private TweetListAdapter tweetListAdapter = new TweetListAdapter();
     private ResponseHandler responseHandler = new ResponseHandler();
-    MSTDNService mstdnService;
+    private MSTDNService mstdnService;
     boolean isBound = false;
+    private boolean isRefreshing = false;
+    private View view;
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -70,6 +75,8 @@ public class MessageListFragment extends Fragment {
             int statusCode = bundle.getInt("statusCode");
             boolean isJson = bundle.getBoolean("isJson");
             boolean isSucceed = bundle.getBoolean("isSucceed");
+            boolean isResponseStatus = false;
+            boolean isResponseError = false;
             String body = bundle.getString("body");
             Status[] statuses = null;
             Error error = null;
@@ -80,33 +87,36 @@ public class MessageListFragment extends Fragment {
                 Gson gson = new Gson();
                 try {
                     statuses = gson.fromJson(body, Status[].class);
-                } catch (JsonParseException e) {
-                    error = gson.fromJson(body, Error.class);
+                    isResponseStatus = true;
+                } catch (JsonParseException e) {}
+
+                if (!isResponseStatus) {
+                    try {
+                        error = gson.fromJson(body, Error.class);
+                        isResponseError = true;
+                    } catch (JsonParseException e) {}
                 }
-                if (statuses != null) {
-//                    int size = statuses.length;
-//                    String[] avatarUrls = new String[size];
-//                    String[] contents = new String[size];
-//                    String[] displayNames = new String[size];
-//                    for (int i=0; i<statuses.length; i++) {
-//                        avatarUrls[i] = statuses[i].account.avatar;
-//                        contents[i] = statuses[i].content;
-//                        displayNames[i] = statuses[i].account.display_name;
-//                    }
-//                    messageListAdapter = new MessageListAdapter(avatarUrls, displayNames, contents);
-                    ArrayList<Status> newItems = new ArrayList<>();
-                    List<Status> currentItems = tweetListAdapter.getCurrentList();
-                    newItems.addAll(Arrays.asList(statuses));
-                    newItems.addAll(currentItems);
-                    tweetListAdapter.submitList(newItems);
-                    recyclerView.setAdapter(tweetListAdapter);
-//                    recyclerView.setAdapter(messageListAdapter);
+
+                if (isResponseStatus) {
+                    if (statuses != null) {
+                        ArrayList<Status> newItems = new ArrayList<>();
+                        List<Status> currentItems = tweetListAdapter.getCurrentList();
+                        newItems.addAll(Arrays.asList(statuses));
+                        newItems.addAll(currentItems);
+                        tweetListAdapter.submitList(newItems);
+                        recyclerView.setAdapter(tweetListAdapter);
+                        Snackbar.make(view, R.string.status_updated, Snackbar.LENGTH_SHORT).show();
+                    } else {
+                        Snackbar.make(view, R.string.status_update_failed, Snackbar.LENGTH_SHORT).show();
+                    }
                 } else {
-                    Toast.makeText(getActivity(), error.error, Toast.LENGTH_SHORT).show();
+                    Snackbar.make(view, R.string.status_update_failed, Snackbar.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(getActivity(), "none 200 response", Toast.LENGTH_SHORT).show();
+                Snackbar.make(view, R.string.status_update_failed, Snackbar.LENGTH_SHORT).show();
             }
+
+            isRefreshing = false;
         }
     }
 
@@ -127,6 +137,7 @@ public class MessageListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.host = getArguments().getString("host");
+        tweetListAdapter.setLocale(getActivity().getResources().getConfiguration().locale);
         Log.i("host", host);
     }
 
@@ -142,15 +153,23 @@ public class MessageListFragment extends Fragment {
     public void onStart() {
         super.onStart();
         layoutManager = new LinearLayoutManager(getActivity());
+        Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+        view = getActivity().findViewById(R.id.my_coord_layout);
         recyclerView = (RecyclerView) getActivity().findViewById(R.id.message_recycle);
         recyclerView.setLayoutManager(layoutManager);
-        recyclerView.scrollToPosition(0);
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                if (!recyclerView.canScrollVertically(-1) && newState == RecyclerView.SCROLL_STATE_DRAGGING) {
-                    mstdnService.callApi(host, PORT, PROTOCOL, "TimelinePublic");
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING && !isRefreshing) {
+                    if ((!recyclerView.canScrollVertically(-1) && !recyclerView.canScrollVertically(1)) || (!recyclerView.canScrollVertically(-1) && recyclerView.canScrollVertically(1))) {
+                        isRefreshing = true;
+                        if (vibrator.hasVibrator()) {
+                            vibrator.vibrate(VibrationEffect.EFFECT_HEAVY_CLICK);
+                        }
+                        Snackbar.make(view, R.string.status_updating, Snackbar.LENGTH_LONG).show();
+                        mstdnService.callApi(host, PORT, PROTOCOL, "TimelinePublic");
+                    }
                 }
             }
         });

@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
-    private String host = "";
+    private SharedPreferences sharedPreferences;
     private final String TAG = "mstdnapp";
 
     @Override
@@ -21,9 +21,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate");
         setContentView(R.layout.activity_main);
-        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
-        host = sharedPreferences.getString(getString(R.string.preferences_host), "");
-        Log.i("view model", this.host);
+        sharedPreferences = getPreferences(Context.MODE_PRIVATE);
+        String host = sharedPreferences.getString(getString(R.string.preferences_host), "");
+        Log.i("view model", host);
         if (host == null || host.isEmpty()) {
             getSupportFragmentManager()
                     .beginTransaction()
@@ -67,12 +67,5 @@ public class MainActivity extends AppCompatActivity {
     protected void onRestart() {
         super.onRestart();
         Log.i(TAG, "onRestart");
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putString("host", this.host);
-        Log.i(TAG, "host saved");
     }
 }
