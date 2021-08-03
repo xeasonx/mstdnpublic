@@ -1,6 +1,6 @@
 package com.example.mstdnpublic;
 
-import android.os.ParcelFormatException;
+
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,16 +13,16 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.mstdnResponseEntities.Status;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 
 public class TweetListAdapter extends ListAdapter<Status, TweetListAdapter.ViewHolder> {
     private Locale locale;
+    private TimeZone timeZone = TimeZone.getDefault();
 
     public TweetListAdapter() {
         super(DIFF_CALLBACK);
@@ -72,10 +72,13 @@ public class TweetListAdapter extends ListAdapter<Status, TweetListAdapter.ViewH
         TextView createdAt = cardView.findViewById(R.id.created_at);
         ImageView avatar = cardView.findViewById(R.id.avatar);
         Glide.with(holder.cardView).load(item.account.avatar).into(avatar);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", locale);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", locale);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", locale);
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        simpleDateFormat.setTimeZone(timeZone);
         try {
             Date date = dateFormat.parse(item.created_at);
-            createdAt.setText(date.toString());
+            createdAt.setText(simpleDateFormat.format(date));
         } catch (ParseException e) {
             createdAt.setText(item.created_at);
         }

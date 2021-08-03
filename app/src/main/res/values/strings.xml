@@ -3,11 +3,13 @@
     <string name="input_host_hint">Please input mastdon server host</string>
     <string name="btn_confirm_host">Confirm</string>
     <string name="pseudo_text">this is a card</string>
-    <string name="status_updating">Updating...</string>
+    <string name="status_updating">Updating…</string>
     <string name="status_updated">Updated</string>
     <string name="status_update_failed">Failed</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="status_validating_host">Validating…</string>
+    <string name="status_validate_fail">Host not valid</string>
     <!-- shared preferences -->
     <string name="preferences_host">host</string>
+    <!-- log tags -->
+    <string name="log_tag">mstdnpublic</string>
 </resources>

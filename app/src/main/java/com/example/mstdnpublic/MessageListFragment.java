@@ -105,15 +105,15 @@ public class MessageListFragment extends Fragment {
                         newItems.addAll(currentItems);
                         tweetListAdapter.submitList(newItems);
                         recyclerView.setAdapter(tweetListAdapter);
-                        Snackbar.make(view, R.string.status_updated, Snackbar.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.status_updated, Toast.LENGTH_SHORT).show();
                     } else {
-                        Snackbar.make(view, R.string.status_update_failed, Snackbar.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.status_update_failed, Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Snackbar.make(view, R.string.status_update_failed, Snackbar.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.status_update_failed, Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Snackbar.make(view, R.string.status_update_failed, Snackbar.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.status_update_failed, Toast.LENGTH_SHORT).show();
             }
 
             isRefreshing = false;
@@ -154,7 +154,6 @@ public class MessageListFragment extends Fragment {
         super.onStart();
         layoutManager = new LinearLayoutManager(getActivity());
         Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
-        view = getActivity().findViewById(R.id.my_coord_layout);
         recyclerView = (RecyclerView) getActivity().findViewById(R.id.message_recycle);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -167,7 +166,7 @@ public class MessageListFragment extends Fragment {
                         if (vibrator.hasVibrator()) {
                             vibrator.vibrate(VibrationEffect.EFFECT_HEAVY_CLICK);
                         }
-                        Snackbar.make(view, R.string.status_updating, Snackbar.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), R.string.status_updating, Toast.LENGTH_LONG).show();
                         mstdnService.callApi(host, PORT, PROTOCOL, "TimelinePublic");
                     }
                 }

@@ -25,7 +25,7 @@ public class Status extends Entity {
     public String url;
     public String in_reply_to_id;
     public String in_reply_to_account_id;
-    public Status relog;
+    public Status reblog;
     public Poll poll;
     public Card card;
     public String language;

@@ -1,40 +1,51 @@
 package com.example.mstdnpublic;
 
-import android.os.Handler;
+import android.os.Bundle;
+import android.os.Message;
 import java.io.IOException;
 import java.net.InetAddress;
 
 
-interface ValidationCallback {
-    void onComplete(boolean result);
-}
-
 public class DomainValidator {
-    private Handler handler;
+    private HostInputViewModel model;
 
-    public DomainValidator(Handler handler) {
-        this.handler = handler;
+    /**
+     *
+     * @param model HostInputViewModel
+     */
+    public DomainValidator(HostInputViewModel model) {
+        this.model = model;
     }
 
-    public void validate(String hostName, ValidationCallback callback) {
-        Validator validator = new Validator(hostName, handler, callback);
+    /**
+     *
+     * Start a thread to check whether host address is valid or not, then send result back through
+     * HostInputViewModel instance.
+     * @param hostName String, host name to be checked
+     */
+    public void validate(String hostName) {
+        Validator validator = new Validator(hostName, model);
         Thread thread = new Thread(validator);
         thread.start();
     }
 
     private class Validator implements Runnable {
         private String host;
-        private Handler handler;
-        private ValidationCallback callback;
+        private HostInputViewModel model;
 
-        public Validator(String host, Handler handler, ValidationCallback callback) {
-            this.host = host;
-            this.handler = handler;
-            this.callback = callback;
+        public Validator(String host, HostInputViewModel model) {
+            if (host != null) {
+                this.host = host.trim();
+            } else {
+                this.host = "";
+            }
+            this.model = model;
         }
 
         @Override
         public void run() {
+            Bundle bundle = new Bundle();
+            Message message = new Message();
             boolean isValid = false;
             if (!this.host.isEmpty()) {
                 try {
@@ -44,13 +55,10 @@ public class DomainValidator {
                     }
                 } catch (IOException e) {}
             }
-            boolean finalIsValid = isValid;
-            this.handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onComplete(finalIsValid);
-                }
-            });
+            bundle.putString("host", host);
+            bundle.putBoolean("isValid", isValid);
+            message.setData(bundle);
+            model.getMessage().postValue(message);
         }
     }
 }
