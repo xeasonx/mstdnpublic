@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/working/projects/tools/android_projects/mstdnpublic/app/src/main/res/layout/activity_main.xml" value="0.16077898550724637" />
+        <entry key="..\:/working/projects/tools/android_projects/mstdnpublic/app/src/main/res/layout/fragment_settring.xml" value="0.16077898550724637" />
+        <entry key="..\:/working/projects/tools/android_projects/mstdnpublic/app/src/main/res/menu/app_settings.xml" value="0.225" />
+        <entry key="..\:/working/projects/tools/android_projects/mstdnpublic/app/src/main/res/menu/confirm_settings.xml" value="0.225" />
+        <entry key="..\:/working/projects/tools/android_projects/mstdnpublic/app/src/main/res/xml/app_prefrences.xml" value="0.16077898550724637" />
+      </map>
+    </option>
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>

@@ -7,9 +7,16 @@
     android:orientation="vertical"
     tools:context=".MessageListFragment">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/message_recycle"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/refresh_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/message_recycle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+
 </LinearLayout>
 

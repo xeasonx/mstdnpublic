@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <SeekBarPreference
+        app:key="maxTweets"
+        app:title="@string/pref_max_tweets"
+        app:min="5"
+        android:max="50"
+        app:defaultValue="20"
+        app:seekBarIncrement="1"
+        app:showSeekBarValue="true" />
+    <SwitchPreference
+        app:key="autoRefresh"
+        app:title="@string/pref_is_auto_refresh" />
+    <EditTextPreference
+        app:key="host"
+        android:title="MSTDN host" />
+</PreferenceScreen>

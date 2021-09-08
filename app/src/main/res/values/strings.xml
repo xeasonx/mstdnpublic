@@ -2,6 +2,8 @@
     <string name="app_name">mstdnpublic</string>
     <string name="input_host_hint">Please input mastdon server host</string>
     <string name="btn_confirm_host">Confirm</string>
+    <string name="app_settings">Settings</string>
+    <string name="save_settings">Save</string>
     <string name="pseudo_text">this is a card</string>
     <string name="status_updating">Updating…</string>
     <string name="status_updated">Updated</string>
@@ -12,4 +14,7 @@
     <string name="preferences_host">host</string>
     <!-- log tags -->
     <string name="log_tag">mstdnpublic</string>
+    <!-- preferences -->
+    <string name="pref_max_tweets">Max tweets</string>
+    <string name="pref_is_auto_refresh">Auto refresh</string>
 </resources>

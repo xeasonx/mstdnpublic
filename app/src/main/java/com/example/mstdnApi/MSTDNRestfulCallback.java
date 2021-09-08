@@ -69,7 +69,11 @@ public class MSTDNRestfulCallback extends UrlRequest.Callback {
 
     @Override
     public void onFailed(UrlRequest request, UrlResponseInfo info, CronetException error) {
-        postResponseData(info.getHttpStatusCode(), false);
+        if (info != null) {
+            postResponseData(info.getHttpStatusCode(), false);
+        } else {
+            postResponseData(500, false);
+        }
         Log.d("request", "fail");
     }
 

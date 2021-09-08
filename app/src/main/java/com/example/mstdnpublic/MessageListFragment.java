@@ -1,26 +1,28 @@
 package com.example.mstdnpublic;
 
+import android.app.ActionBar;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.VibrationAttributes;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 import com.example.mstdnResponseEntities.Error;
 import com.example.mstdnResponseEntities.Status;
 import com.google.android.material.snackbar.Snackbar;
@@ -43,12 +45,16 @@ public class MessageListFragment extends Fragment {
     private final String PROTOCOL = "https";
     private RecyclerView recyclerView;
     private RecyclerView.LayoutManager layoutManager;
+    private SwipeRefreshLayout refreshLayout;
+    private ActionBar actionBar;
     private TweetListAdapter tweetListAdapter = new TweetListAdapter();
     private ResponseHandler responseHandler = new ResponseHandler();
     private MSTDNService mstdnService;
     boolean isBound = false;
-    private boolean isRefreshing = false;
-    private View view;
+    private boolean isRefreshing = true;
+    private int tweetItemCount = 0;
+//    private int vpos = 0;
+//    private Snackbar snackbar;
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -58,6 +64,7 @@ public class MessageListFragment extends Fragment {
             isBound = true;
             mstdnService.setHandler(responseHandler);
             Log.i("service", "connected");
+//            snackbar.show();
             mstdnService.callApi(host, PORT, PROTOCOL,"TimelinePublic");
         }
 
@@ -80,9 +87,11 @@ public class MessageListFragment extends Fragment {
             String body = bundle.getString("body");
             Status[] statuses = null;
             Error error = null;
-            Log.i("handler", String.valueOf(statusCode));
-            Log.i("handler", String.valueOf(isJson));
-            Log.i("handler", body);
+//            Log.i("handler", String.valueOf(statusCode));
+//            Log.i("handler", String.valueOf(isJson));
+//            Log.i("handler", body.toString());
+//            snackbar.dismiss();
+            refreshLayout.setRefreshing(false);
             if (statusCode == 200 && isJson && isSucceed) {
                 Gson gson = new Gson();
                 try {
@@ -103,17 +112,19 @@ public class MessageListFragment extends Fragment {
                         List<Status> currentItems = tweetListAdapter.getCurrentList();
                         newItems.addAll(Arrays.asList(statuses));
                         newItems.addAll(currentItems);
+                        tweetItemCount = newItems.size();
                         tweetListAdapter.submitList(newItems);
                         recyclerView.setAdapter(tweetListAdapter);
-                        Toast.makeText(getContext(), R.string.status_updated, Toast.LENGTH_SHORT).show();
+                        recyclerView.smoothScrollToPosition(20);
+                        Snackbar.make(getActivity().findViewById(R.id.fragment_main), R.string.status_updated, Snackbar.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(getContext(), R.string.status_update_failed, Toast.LENGTH_SHORT).show();
+                        Snackbar.make(getActivity().findViewById(R.id.fragment_main), R.string.status_update_failed, Snackbar.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(getContext(), R.string.status_update_failed, Toast.LENGTH_SHORT).show();
+                    Snackbar.make(getActivity().findViewById(R.id.fragment_main), R.string.status_update_failed, Snackbar.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(getContext(), R.string.status_update_failed, Toast.LENGTH_SHORT).show();
+                Snackbar.make(getActivity().findViewById(R.id.fragment_main), R.string.status_update_failed, Snackbar.LENGTH_SHORT).show();
             }
 
             isRefreshing = false;
@@ -136,6 +147,7 @@ public class MessageListFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
         this.host = getArguments().getString("host");
         tweetListAdapter.setLocale(getActivity().getResources().getConfiguration().locale);
         Log.i("host", host);
@@ -152,26 +164,50 @@ public class MessageListFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+//        snackbar = Snackbar.make(getActivity().findViewById(R.id.fragment_main), R.string.status_updating, Snackbar.LENGTH_INDEFINITE);
+        refreshLayout = (SwipeRefreshLayout) getActivity().findViewById(R.id.refresh_container);
+        actionBar = ((AppCompatActivity)getActivity()).getActionBar();
         layoutManager = new LinearLayoutManager(getActivity());
         Vibrator vibrator = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
         recyclerView = (RecyclerView) getActivity().findViewById(R.id.message_recycle);
         recyclerView.setLayoutManager(layoutManager);
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        refreshLayout.setRefreshing(true);
+        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                if (newState == RecyclerView.SCROLL_STATE_DRAGGING && !isRefreshing) {
-                    if ((!recyclerView.canScrollVertically(-1) && !recyclerView.canScrollVertically(1)) || (!recyclerView.canScrollVertically(-1) && recyclerView.canScrollVertically(1))) {
-                        isRefreshing = true;
-                        if (vibrator.hasVibrator()) {
-                            vibrator.vibrate(VibrationEffect.EFFECT_HEAVY_CLICK);
-                        }
-                        Toast.makeText(getContext(), R.string.status_updating, Toast.LENGTH_LONG).show();
-                        mstdnService.callApi(host, PORT, PROTOCOL, "TimelinePublic");
-                    }
-                }
+            public void onRefresh() {
+                isRefreshing = true;
+                mstdnService.callApi(host, PORT, PROTOCOL, "TimelinePublic");
             }
         });
+//        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+//            @Override
+//            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+//                super.onScrolled(recyclerView, dx, dy);
+//                vpos = dy;
+//            }
+//
+//            @Override
+//            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+//                super.onScrollStateChanged(recyclerView, newState);
+//                System.out.format("%d, %b, %d%n", newState, recyclerView.canScrollVertically(-1), vpos);
+//                if (!isRefreshing) {
+//                    if (tweetItemCount == 0) {
+//                        isRefreshing = true;
+//                        snackbar.show();
+//                        mstdnService.callApi(host, PORT, PROTOCOL, "TimelinePublic");
+//                    } else {
+//                        if (newState == RecyclerView.SCROLL_STATE_DRAGGING && !recyclerView.canScrollVertically(-1) && vpos < 0) {
+//                            isRefreshing = true;
+//                            if (vibrator.hasVibrator()) {
+//                                vibrator.vibrate(VibrationEffect.EFFECT_HEAVY_CLICK);
+//                            }
+//                            snackbar.show();
+//                            mstdnService.callApi(host, PORT, PROTOCOL, "TimelinePublic");
+//                        }
+//                    }
+//                }
+//            }
+//        });
         Intent intent = new Intent(getActivity(), MSTDNService.class);
         getActivity().bindService(intent, connection, Context.BIND_AUTO_CREATE);
         Log.i("service", String.valueOf(isBound));
@@ -183,5 +219,19 @@ public class MessageListFragment extends Fragment {
         super.onStop();
         getActivity().unbindService(connection);
         isBound = false;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.refresh:
+                if (!isRefreshing) {
+                    refreshLayout.setRefreshing(true);
+                    mstdnService.callApi(host, PORT, PROTOCOL, "TimelinePublic");
+                }
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }

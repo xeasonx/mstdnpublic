@@ -1,10 +1,16 @@
 package com.example.mstdnpublic;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 
 /**
@@ -25,8 +31,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.app_toolbar);
+        setSupportActionBar(toolbar);
         SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
         String host = sharedPreferences.getString(getString(R.string.preferences_host), "");
+        int maxTweets = sharedPreferences.getInt("maxTweets", 20);
+        boolean autoRefresh = sharedPreferences.getBoolean("autoRefresh", false);
+        Log.i(TAG, String.format("preferences: %s, %d, %b%n", host, maxTweets, autoRefresh));
 
         if (host == null || host.isEmpty()) {
             Log.i(TAG, "No host found");
@@ -44,4 +55,26 @@ public class MainActivity extends AppCompatActivity {
                     .commit();
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.app_settings, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.app_settings:
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_main, new SettingFragment())
+                        .addToBackStack(null)
+                        .commit();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
 }
